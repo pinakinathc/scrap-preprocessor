@@ -5,6 +5,7 @@ import smtplib
 from smtplib import SMTPServerDisconnected
 import logging
 import threading
+import csv
 class emailFilter(threading.Thread):
 
 
@@ -79,8 +80,7 @@ def filterMails(rows,fname,chunk=50):
                        logging.exception("failed to start thread id %d"%(i))
         print("Total %d threads are running"%len(threads))
 
-
-
+        
         for t in threads:
             t.join()
             rejected+=t.getRejected()
@@ -88,5 +88,19 @@ def filterMails(rows,fname,chunk=50):
         print("Total Rejected: %s Total Accepted: %s"%(len(rejected),len(accepted)))
         open('rejected_from_%s.txt'%fname,'w').write(','.join(rejected))
 
-                
-                        
+        #This will help us to judge about the accuracy of emails in a better way
+
+        with open('email%s.csv'%fname,'w') as f:
+                fieldnames=['Accepted_mails','Rejected_mails']
+                writer = csv.DictWriter(f,fieldnames=fieldnames,dialect=csv.excel)
+
+                writer.writeheader()
+
+                for accept in accepted:
+                    writer.writerow({fieldnames[0]:accept})
+                for reject in rejected:
+                    writer.writerow({fieldnames[1]:reject})
+                ##later on we can specially look into those email ids which did not responded
+
+                f.close()
+                #print "Done"
